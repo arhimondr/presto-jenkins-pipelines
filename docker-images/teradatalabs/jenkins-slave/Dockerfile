@@ -1,6 +1,10 @@
 FROM ubuntu:16.04
 MAINTAINER Teradata Docker Team <docker@teradata.com>
 
+# Set Locale
+RUN locale-gen en_US.UTF-8
+COPY locale /etc/default/locale
+
 # Change Mirror
 RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirror.steadfast.net\/ubuntu\//g' /etc/apt/sources.list
 
