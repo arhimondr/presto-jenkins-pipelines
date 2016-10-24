@@ -4,10 +4,8 @@ set -xe;
 
 if [ -e ${VOLUME_LOCATION_BASE} ];
 then
-  VOLUME_LOCATION_BASE="~"
+  VOLUME_LOCATION_BASE=${HOME}
 fi
-
-VOLUME_LOCATION_BASE=$(readlink -e ${VOLUME_LOCATION_BASE})
 
 if [ -e ${WORKERS} ];
 then
@@ -26,7 +24,9 @@ do
 VOLUMES_LOCATION=${VOLUME_LOCATION_BASE}/${WORKER_ID}
 mkdir -p ${VOLUMES_LOCATION}/jenkins_slave && chmod 777 ${VOLUMES_LOCATION}/jenkins_slave
 mkdir -p ${VOLUMES_LOCATION}/docker_images && chmod 777 ${VOLUMES_LOCATION}/docker_images
+mkdir -p ${VOLUMES_LOCATION}/.m2 && chmod 777 ${VOLUMES_LOCATION}/.m2
 
+docker rm -f ${WORKER_ID} || true
 docker run \
 	--name ${WORKER_ID} \
 	--privileged \
@@ -35,14 +35,10 @@ docker run \
 	-p ${START_PORT}:22 \
 	-v ${VOLUMES_LOCATION}/jenkins_slave:/home/jenkins/jenkins_slave \
 	-v ${VOLUMES_LOCATION}/docker_images:/var/lib/docker \
+	-v ${VOLUMES_LOCATION}/.m2:/home/jenkins/.m2 \
 	teradatalabs/jenkins-slave:latest
 
 START_PORT=$[START_PORT+1]
 
 done
-
-
-
-
-
 
