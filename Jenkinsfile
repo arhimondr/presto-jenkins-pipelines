@@ -10,7 +10,10 @@ node('master') {
      
     echo "git_branch: " + git_branch; 
     echo "git_url: " + git_url; 
-    echo "stages: " + stages; 
+    echo "stages: " + stages;
+
+    currentBuild.displayName = 'Presto Travis Pipeline: ' + git_url + '/' + git_branch
+    currentBuild.description = "Stages: " + stages 
     
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
