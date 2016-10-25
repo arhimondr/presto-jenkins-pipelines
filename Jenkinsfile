@@ -1,9 +1,12 @@
+#!/usr/bin/env groovy
+
 import org.yaml.snakeyaml.Yaml
 import com.cloudbees.groovy.cps.NonCPS
 
 node('master') {
     def git_branch = '${BRANCH}'
     def git_url = 'https://github.com/${FORK}/presto'
+    def stages = '${STAGES}'
     
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
@@ -23,17 +26,23 @@ node('master') {
     def parallelInvocations = [:]
     for(int i=0; i<combine.size(); i++){
         def env = combine.get(i)
-        parallelInvocations[env.toString()] = {
-            node('worker') {
-                git branch: git_branch, url: git_url
-                withEnv(env) {
-                    sh install_script
-                    for(int j=0; j<scripts.size(); j++){
-                        sh scripts.get(j)
+        if(stages.equals('ALL') || stages.contains(env)){
+            parallelInvocations[env.toString()] = {
+                node('worker') {
+                    git branch: git_branch, url: git_url
+                    withEnv(env) {
+                        sh install_script
+                        for(int j=0; j<scripts.size(); j++){
+                            sh scripts.get(j)
+                        }
                     }
                 }
             }
         }
+    }
+
+    if(parallelInvocations.isEmpty()){
+        error 'no stages selected'
     }
     
     stage("Parallel Travis Execution") {
