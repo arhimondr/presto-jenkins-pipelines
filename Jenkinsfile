@@ -40,15 +40,17 @@ node('master') {
         if(stages.equals('ALL') || stages.contains(name)){
             parallelInvocations[name] = {
                 node('worker') {
-                    git branch: git_branch, url: git_url
-                    withEnv(env) {
-			sh './mvnw clean'
-			sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-                        sh install_script
-                        for(int j=0; j<scripts.size(); j++){
-                            sh scripts.get(j)
-                        }
-                    }
+		    timeout(time: 2, unit: 'HOURS') {
+			    git branch: git_branch, url: git_url
+			    withEnv(env) {
+				sh './mvnw clean'
+				sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
+				sh install_script
+				for(int j=0; j<scripts.size(); j++){
+				    sh scripts.get(j)
+				}
+			    }
+		    }
                 }
             }
         }
