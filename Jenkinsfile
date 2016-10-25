@@ -4,16 +4,17 @@ import org.yaml.snakeyaml.Yaml
 import com.cloudbees.groovy.cps.NonCPS
 
 node('master') {
+    def user = env.BUILD_USER_ID
     def git_branch = env.BRANCH
-    def git_url = "https://github.com/${env.FORK}/presto"
+    def fork = env.FORK
+    def git_url = "https://github.com/${fork}/presto"
     def stages = env.STAGES
      
     echo "git_branch: " + git_branch; 
     echo "git_url: " + git_url; 
     echo "stages: " + stages;
 
-    currentBuild.displayName = 'Presto Travis Pipeline: ' + git_url + '/' + git_branch
-    currentBuild.description = "Stages: " + stages 
+    currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
     
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
