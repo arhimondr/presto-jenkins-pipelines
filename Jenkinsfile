@@ -26,8 +26,9 @@ node('master') {
     def parallelInvocations = [:]
     for(int i=0; i<combine.size(); i++){
         def env = combine.get(i)
-        if(stages.equals('ALL') || stages.contains(env)){
-            parallelInvocations[env.toString()] = {
+	def name = env.toString()
+        if(stages.equals('ALL') || stages.contains(name)){
+            parallelInvocations[name] = {
                 node('worker') {
                     git branch: git_branch, url: git_url
                     withEnv(env) {
