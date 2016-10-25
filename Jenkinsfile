@@ -37,7 +37,7 @@ node('master') {
                     git branch: git_branch, url: git_url
                     withEnv(env) {
 			sh './mvnw clean'
-			sh 'docker rm -f $(docker ps -a -q)'
+			sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
                         sh install_script
                         for(int j=0; j<scripts.size(); j++){
                             sh scripts.get(j)
