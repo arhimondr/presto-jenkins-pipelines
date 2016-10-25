@@ -4,7 +4,6 @@ import org.yaml.snakeyaml.Yaml
 import com.cloudbees.groovy.cps.NonCPS
 
 node('master') {
-    def user = env.BUILD_USER_ID
     def git_branch = env.BRANCH
     def fork = env.FORK
     def git_url = "https://github.com/${fork}/presto"
@@ -14,7 +13,10 @@ node('master') {
     echo "git_url: " + git_url; 
     echo "stages: " + stages;
 
-    currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
+    wrap([$class: 'BuildUser']) {
+    	def user = env.BUILD_USER_ID
+	currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
+    }
     
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
