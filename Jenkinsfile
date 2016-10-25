@@ -16,7 +16,8 @@ node('master') {
     def combine = combineEnvironmentProperties(matrix, global);
     def install_script = travis.install;
     def scripts = travis.script
-    
+   
+    echo "stages: " + stages; 
     echo "global: " + global.toString();
     echo "matrix: " + matrix.toString();
     echo "combine: " + combine.toString();
