@@ -42,7 +42,7 @@ node('master') {
         }
     }
 
-    if(parallelInvocations.isEmpty()){
+    if(parallelInvocations.size()==0){
         error 'no stages selected'
     }
     
