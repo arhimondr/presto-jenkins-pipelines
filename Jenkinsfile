@@ -4,9 +4,13 @@ import org.yaml.snakeyaml.Yaml
 import com.cloudbees.groovy.cps.NonCPS
 
 node('master') {
-    def git_branch = '${BRANCH}'
-    def git_url = 'https://github.com/${FORK}/presto'
-    def stages = '${STAGES}'
+    def git_branch = env.BRANCH
+    def git_url = "https://github.com/${env.FORK}/presto"
+    def stages = env.STAGES
+     
+    echo "git_branch: " + git_branch; 
+    echo "git_url: " + git_url; 
+    echo "stages: " + stages; 
     
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
@@ -17,7 +21,6 @@ node('master') {
     def install_script = travis.install;
     def scripts = travis.script
    
-    echo "stages: " + stages; 
     echo "global: " + global.toString();
     echo "matrix: " + matrix.toString();
     echo "combine: " + combine.toString();
