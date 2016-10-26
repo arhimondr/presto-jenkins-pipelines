@@ -21,7 +21,7 @@ node('master') {
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
     def travis = readAndConvertTravis(yaml_content)
-    def global = [] // travis.env.global;
+    def global = travis.env.global;
     def matrix = travis.env.matrix;
     def combine = combineEnvironmentProperties(matrix, global);
     def install_script = travis.install;
@@ -36,7 +36,7 @@ node('master') {
     def parallelInvocations = [:]
     for(int i=0; i<combine.size(); i++){
         def env = combine.get(i)
-	def name = env.toString()
+	def name = matrix.get(i).toString()
         if(stages.equals('ALL') || stages.contains(name)){
             parallelInvocations[name] = {
                 node('worker') {
