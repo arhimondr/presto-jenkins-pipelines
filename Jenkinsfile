@@ -42,13 +42,20 @@ node('master') {
                 node('worker') {
 		    timeout(time: 2, unit: 'HOURS') {
 			    git branch: git_branch, url: git_url
-			    withEnv(env) {
-				sh './mvnw clean'
-				sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-				sh install_script
-				for(int j=0; j<scripts.size(); j++){
-				    sh scripts.get(j)
-				}
+			    configFileProvider([configFile(fileId: '00c4e7c0-a280-47b5-935e-9ed912f12d1c', variable: 'USER_SETTINGS_XML')]) {
+				    def userSettingsXml = env.USER_SETTINGS_XML
+				    echo "userSettingsXml: " + userSettingsXml;
+				    def mavenOpts = 'MAVEN_OPTS=-Dorg.apache.maven.user-settings=' + userSettingsXml;
+				    echo "mavenOpts: " + mavenOpts;
+				    env.add(mavenOpts)
+				    withEnv(env) {
+					sh './mvnw clean'
+					sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
+					sh install_script
+					for(int j=0; j<scripts.size(); j++){
+					    sh scripts.get(j)
+					}
+				    }
 			    }
 		    }
                 }
