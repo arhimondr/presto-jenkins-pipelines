@@ -65,16 +65,41 @@ node('master') {
     }
 }
 
+
 def combineEnvironmentProperties(matrix, global){
+    def globalSanitized = [];
+    for(int i=0; i<global.size(); i++){
+        globalSanitized[i] = sanitizeEnvironmentVariable(global.get(i));
+    }
+
     def result = [];
     for(int i=0; i<matrix.size(); i++){
         def properties = [];
-        properties.addAll(global);
-        properties.add(matrix.get(i));
+        properties.addAll(globalSanitized);
+        properties.add(sanitizeEnvironmentVariable(matrix.get(i)));
         result[i] = properties;
     }
     return result;
 }
+
+def sanitizeEnvironmentVariable(String variable) {
+    def separatorIndex = variable.indexOf('=');
+    if(separatorIndex == -1 || separatorIndex == (variable.length() - 1)){
+        return variable;
+    }
+    def key = variable.substring(0, separatorIndex);
+    def value = variable.substring(separatorIndex+1, variable.length());
+    return stripLeadingTrailingQuotes(key) + '=' + stripLeadingTrailingQuotes(value);
+}
+
+def stripLeadingTrailingQuotes(String inputString) {
+    if ((inputString.startsWith('"') && inputString.endsWith('"')) || (inputString.startsWith("'") && inputString.endsWith("'"))) {
+       return inputString.substring(1, inputString.length() - 1)
+    } else {
+       return inputString
+    }
+}
+
 
 @NonCPS
 def readAndConvertTravis(String travisYml) {
