@@ -67,29 +67,37 @@ node('master') {
 
 
 def combineEnvironmentProperties(matrix, global){
+    def excluded = ['MAVEN_OPTS']
+
     def globalSanitized = [];
     for(int i=0; i<global.size(); i++){
-        globalSanitized[i] = sanitizeEnvironmentVariable(global.get(i));
+        def parsed = parseVariable(global.get(i));
+        def key = parsed['key'];
+        if(!excluded.contains(key)){
+            globalSanitized.add(sanitizeEnvironmentVariable(parsed));
+        }
     }
 
     def result = [];
     for(int i=0; i<matrix.size(); i++){
         def properties = [];
         properties.addAll(globalSanitized);
-        properties.add(sanitizeEnvironmentVariable(matrix.get(i)));
+        properties.add(sanitizeEnvironmentVariable(parseVariable(matrix.get(i))));
         result[i] = properties;
     }
     return result;
 }
 
-def sanitizeEnvironmentVariable(String variable) {
+def parseVariable(String variable){
     def separatorIndex = variable.indexOf('=');
-    if(separatorIndex == -1 || separatorIndex == (variable.length() - 1)){
-        return variable;
-    }
-    def key = variable.substring(0, separatorIndex);
-    def value = variable.substring(separatorIndex+1, variable.length());
-    return stripLeadingTrailingQuotes(key) + '=' + stripLeadingTrailingQuotes(value);
+    def parsed = [:]
+    parsed['key'] = variable.substring(0, separatorIndex);
+    parsed['value'] = variable.substring(separatorIndex+1, variable.length());
+    return parsed;
+}
+
+def sanitizeEnvironmentVariable(variable) {
+    return stripLeadingTrailingQuotes(variable['key']) + '=' + stripLeadingTrailingQuotes(variable['value']);
 }
 
 def stripLeadingTrailingQuotes(String inputString) {
