@@ -43,6 +43,9 @@ RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true 
 COPY id_rsa.pub /tmp/id_rsa.pub
 RUN mkdir -p ~/.ssh && cat /tmp/id_rsa.pub > ~/.ssh/authorized_keys
 
+# Setup sudo
+RUN apt-get install sudo
+
 # Setup Jenkins User
 RUN adduser jenkins  --disabled-password --gecos "" --shell /bin/bash \
 	&& usermod -aG sudo jenkins \
@@ -50,7 +53,9 @@ RUN adduser jenkins  --disabled-password --gecos "" --shell /bin/bash \
 	&& su - jenkins -c 'mkdir -p /home/jenkins/.ssh' \
 	&& su - jenkins -c 'touch /home/jenkins/.ssh/authorized_keys' \
 	&& cat /tmp/id_rsa.pub >> /home/jenkins/.ssh/authorized_keys \
-	&& usermod -aG docker jenkins
+	&& usermod -aG docker jenkins \
+	&& usermod -aG sudo jenkins \
+	&& echo 'jenkins ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Setup Supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
