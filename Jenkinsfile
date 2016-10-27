@@ -42,14 +42,23 @@ node('master') {
                 node('worker') {
 		    timeout(time: 2, unit: 'HOURS') {
 			    git branch: git_branch, url: git_url
-			    withEnv(env) {
-				sh 'sudo rm -rf ./*/target'
-				sh './mvnw clean'
-				sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-				sh install_script
-				for(int j=0; j<scripts.size(); j++){
-				    sh scripts.get(j)
-				}
+			    configFileProvider([configFile(fileId: '00c4e7c0-a280-47b5-935e-9ed912f12d1c', variable: 'SETTINGS_XML_LOCATION')]) {
+				    def settings_xml_location = env.SETTINGS_XML_LOCATION
+				    echo "settings_xml_location: " + settings_xml_location;
+				    def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location;
+				    echo "maven_config: " + maven_config;
+				    def env_all = [];
+                                    env_all.addAll(env);
+				    env_all.add(maven_config);
+				    withEnv(env_all) {
+					sh 'sudo rm -rf ./*/target'
+					sh './mvnw clean'
+					sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
+					sh install_script
+					for(int j=0; j<scripts.size(); j++){
+					    sh scripts.get(j)
+					}
+				    }
 			    }
 		    }
                 }
