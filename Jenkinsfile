@@ -43,6 +43,7 @@ node('master') {
 		    timeout(time: 2, unit: 'HOURS') {
 			    git branch: git_branch, url: git_url
 			    withEnv(env) {
+				sh 'sudo rm -rf ./*/target'
 				sh './mvnw clean'
 				sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
 				sh install_script
