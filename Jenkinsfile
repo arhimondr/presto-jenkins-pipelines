@@ -35,7 +35,7 @@ node('master') {
     
     def parallelInvocations = [:]
     for(int i=0; i<combine.size(); i++){
-        def env = combine.get(i)
+        def combined_variables = combine.get(i)
 	def name = matrix.get(i).toString()
         if(stages.equals('ALL') || stages.contains(name)){
             parallelInvocations[name] = {
@@ -47,10 +47,10 @@ node('master') {
 				    echo "settings_xml_location: " + settings_xml_location;
 				    def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location;
 				    echo "maven_config: " + maven_config;
-				    def env_all = [];
-                                    env_all.addAll(env);
-				    env_all.add(maven_config);
-				    withEnv(env_all) {
+				    def invocation_environment = [];
+                                    invocation_environment.addAll(combined_variables);
+				    invocation_environment.add(maven_config);
+				    withEnv(invocation_environment) {
 					sh 'sudo rm -rf ./*/target'
 					sh './mvnw clean'
 					sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
