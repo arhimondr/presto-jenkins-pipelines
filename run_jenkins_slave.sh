@@ -27,6 +27,7 @@ mkdir -p ${VOLUMES_LOCATION}/docker_images && chmod 777 ${VOLUMES_LOCATION}/dock
 mkdir -p ${VOLUMES_LOCATION}/.m2 && chmod 777 ${VOLUMES_LOCATION}/.m2
 
 docker rm -f ${WORKER_ID} || true
+docker pull teradatalabs/jenkins-slave:latest
 docker run \
 	--name ${WORKER_ID} \
 	--privileged \
