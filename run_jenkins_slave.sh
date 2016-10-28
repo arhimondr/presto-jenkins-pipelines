@@ -31,6 +31,7 @@ docker pull teradatalabs/jenkins-slave:latest
 docker run \
 	--name ${WORKER_ID} \
 	--privileged \
+	--cpu-shares=50 \
 	-d \
 	--restart=always \
 	-p ${START_PORT}:22 \
