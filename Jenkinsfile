@@ -54,7 +54,7 @@ node('master') {
 					sh 'sudo rm -rf ./*/target'
 					sh './mvnw clean'
 					sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-					if(install_script != null && install_script.length() > 0){
+					if(install_script != null && !install_script.isEmpty()){
 						sh install_script
 					}
 					for(int j=0; j<scripts.size(); j++){
