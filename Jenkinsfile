@@ -24,13 +24,13 @@ node('master') {
     def global = travis.env.global;
     def matrix = travis.env.matrix;
     def combine = combineEnvironmentProperties(matrix, global);
-    def install_script = travis.install;
-    def scripts = travis.script
+    def install_scripts = getYamlStringOrListAsList(travis.install);
+    def scripts = getYamlStringOrListAsList(travis.script);
    
     echo "global: " + global.toString();
     echo "matrix: " + matrix.toString();
     echo "combine: " + combine.toString();
-    echo "install_script: " + combine.toString();
+    echo "install_scripts: " + install_scripts.toString();
     echo "scripts: " + scripts.toString();
     
     def parallelInvocations = [:]
@@ -54,7 +54,9 @@ node('master') {
 					sh 'sudo rm -rf ./*/target'
 					sh './mvnw clean'
 					sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-					sh install_script.toString()
+					for(int j=0; j<install_scripts.size(); j++){
+					    sh install_scripts.get(j).toString()
+					}
 					for(int j=0; j<scripts.size(); j++){
 					    sh scripts.get(j).toString()
 					}
@@ -73,6 +75,18 @@ node('master') {
     stage("Parallel Travis Execution") {
         parallel parallelInvocations
     }
+}
+
+def getYamlStringOrListAsList(yamlEntry) {
+	if(yamlEntry == null){
+	   return [];	
+	} else if (yamlEntry instanceof String) {
+	    return [yamlEntry]
+	} else if (yamlEntry instanceof ArrayList) {
+	    return yamlEntry
+	} else {
+	    return ""
+	}
 }
 
 
