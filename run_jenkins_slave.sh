@@ -32,7 +32,6 @@ docker run \
 	--name ${WORKER_ID} \
 	--privileged \
 	--cpu-shares=50 \
-	--ulimit nofile=16384:16384 \
 	-d \
 	--restart=always \
 	-p ${START_PORT}:22 \
