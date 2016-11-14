@@ -59,6 +59,8 @@ RUN adduser jenkins  --disabled-password --gecos "" --shell /bin/bash \
 
 # Setup Supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY limits.conf /etc/security/limits.conf
+COPY sysctl.conf /etc/sysctl.conf
 
 CMD ["/usr/bin/supervisord"]
 	
