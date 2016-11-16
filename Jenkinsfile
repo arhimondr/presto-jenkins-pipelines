@@ -17,7 +17,10 @@ node('master') {
     	def user = env.BUILD_USER_ID
 	currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
     }
-    
+
+    sh "git checkout master"
+    sh "git branch | grep -v \"master\" | xargs git branch -D || true"
+    sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/origin/*"
     git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
     def travis = readAndConvertTravis(yaml_content)
@@ -41,6 +44,9 @@ node('master') {
             parallelInvocations[name] = {
                 node('worker') {
 		    timeout(time: 2, unit: 'HOURS') {
+          sh "git checkout master"
+          sh "git branch | grep -v \"master\" | xargs git branch -D || true"
+          sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/origin/*"
 			    git branch: git_branch, url: git_url
 			    configFileProvider([configFile(fileId: '00c4e7c0-a280-47b5-935e-9ed912f12d1c', variable: 'SETTINGS_XML_LOCATION')]) {
 				    def settings_xml_location = env.SETTINGS_XML_LOCATION
