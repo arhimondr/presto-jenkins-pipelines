@@ -17,11 +17,13 @@ node('master') {
     	def user = env.BUILD_USER_ID
 	currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
     }
+    
+    sh 'git init'
+    sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/${fork}/*"
+    def revision = sh returnStdout: true, script: "git rev-parse refs/remotes/${fork}/${branch}"
+    echo "Revision: ${revision}"
+    sh "git checkout -f ${revision}"
 
-    sh "git checkout master"
-    sh "git branch | grep -v \"master\" | xargs git branch -D || true"
-    sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/origin/*"
-    git branch: git_branch, url: git_url
     def yaml_content = readFile '.travis.yml'
     def travis = readAndConvertTravis(yaml_content)
     def global = travis.env.global;
@@ -43,11 +45,12 @@ node('master') {
         if(stages.equals('ALL') || stages.contains(name)){
             parallelInvocations[name] = {
                 node('worker') {
-		    timeout(time: 2, unit: 'HOURS') {
-          sh "git checkout master"
-          sh "git branch | grep -v \"master\" | xargs git branch -D || true"
-          sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/origin/*"
-			    git branch: git_branch, url: git_url
+		    timeout(time: 2, unit: 'HOURS') { 
+
+			    sh "git init"
+                            sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/${fork}/*"
+    			    sh "git checkout -f ${revision}"
+
 			    configFileProvider([configFile(fileId: '00c4e7c0-a280-47b5-935e-9ed912f12d1c', variable: 'SETTINGS_XML_LOCATION')]) {
 				    def settings_xml_location = env.SETTINGS_XML_LOCATION
 				    echo "settings_xml_location: " + settings_xml_location;
