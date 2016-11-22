@@ -25,6 +25,7 @@ VOLUMES_LOCATION=${VOLUME_LOCATION_BASE}/${WORKER_ID}
 mkdir -p ${VOLUMES_LOCATION}/jenkins_slave && chmod 777 ${VOLUMES_LOCATION}/jenkins_slave
 mkdir -p ${VOLUMES_LOCATION}/docker_images && chmod 777 ${VOLUMES_LOCATION}/docker_images
 mkdir -p ${VOLUMES_LOCATION}/.m2 && chmod 777 ${VOLUMES_LOCATION}/.m2
+mkdir -p ${VOLUMES_LOCATION}/tmp && chmod 777 ${VOLUMES_LOCATION}/tmp
 
 docker rm -f ${WORKER_ID} || true
 docker pull teradatalabs/jenkins-slave:latest
@@ -38,6 +39,7 @@ docker run \
 	-v ${VOLUMES_LOCATION}/jenkins_slave:/home/jenkins/jenkins_slave \
 	-v ${VOLUMES_LOCATION}/docker_images:/var/lib/docker \
 	-v ${VOLUMES_LOCATION}/.m2:/home/jenkins/.m2 \
+	-v ${VOLUMES_LOCATION}/tmp:/tmp \
 	teradatalabs/jenkins-slave:latest
 
 START_PORT=$[START_PORT+1]
