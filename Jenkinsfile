@@ -13,15 +13,17 @@ node('master') {
     echo "git_url: " + git_url; 
     echo "stages: " + stages;
 
+    def user = "";
     wrap([$class: 'BuildUser']) {
-    	def user = env.BUILD_USER_ID
-	currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
+    	user = env.BUILD_USER_ID
     }
+    currentBuild.description = "User: " + user + "\nFork: " + fork + "\nBranch: " + branch + "\nStages: " + stages 
     
     sh 'git init'
     sh "git fetch --prune --tags --progress ${git_url} +refs/heads/*:refs/remotes/${fork}/*"
     def revision = sh returnStdout: true, script: "git rev-parse refs/remotes/${fork}/${branch}"
     echo "Revision: ${revision}"
+    currentBuild.description = currentBuild.description + "\nRevision: " + revision 
     sh "git checkout -f ${revision}"
 
     def yaml_content = readFile '.travis.yml'
