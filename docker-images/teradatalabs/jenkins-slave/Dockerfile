@@ -58,6 +58,7 @@ RUN adduser jenkins  --disabled-password --gecos "" --shell /bin/bash \
 	&& echo 'jenkins ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Setup Supervisor
+COPY dockerd.sh /usr/bin/dockerd.sh
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY limits.conf /etc/security/limits.conf
 COPY sysctl.conf /etc/sysctl.conf
