@@ -93,8 +93,12 @@ node('master') {
     }
     
     stage("Parallel Travis Execution") {
-        parallel parallelInvocations
-	currentBuild.result = build.state
+	try {
+		parallel parallelInvocations
+	} catch(err) {
+		currentBuild.result = build.state
+		throw err
+	}
     }
 }
 
