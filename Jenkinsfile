@@ -39,6 +39,9 @@ node('master') {
     echo "combine: " + combine.toString();
     echo "install_scripts: " + install_scripts.toString();
     echo "scripts: " + scripts.toString();
+
+    def build = {};
+    build.state = 'SUCCESS';
     
     def parallelInvocations = [:]
     for(int i=0; i<combine.size(); i++){
@@ -74,6 +77,7 @@ node('master') {
                                 	        }
 					} catch(err) {
 						step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
+						transitionToState(build, currentBuild.result)
 						throw err
 					}
 				    }
@@ -90,7 +94,19 @@ node('master') {
     
     stage("Parallel Travis Execution") {
         parallel parallelInvocations
+	currentBuild.result = build.state
     }
+}
+
+def transitionToState(build, state){
+	// transition to FAILED immediately
+	if(state == 'FAILURE'){
+		build.state = state
+	}
+	// transition to UNSTABLE only if it is still SUCCESS
+	if(state == 'UNSTABLE' && build.state == 'SUCCESS'){
+		build.state = state
+	}
 }
 
 def getYamlStringOrListAsList(yamlEntry) {
