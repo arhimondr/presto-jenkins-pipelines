@@ -65,13 +65,17 @@ node('master') {
 					sh 'sudo rm -rf ./*/target'
 					sh './mvnw clean'
 					sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-					for(int j=0; j<install_scripts.size(); j++){
-					    sh install_scripts.get(j).toString()
+					try {
+						for(int j=0; j<install_scripts.size(); j++){
+	                                            sh install_scripts.get(j).toString()
+        	                                }
+                	                        for(int j=0; j<scripts.size(); j++){
+                        	                    sh scripts.get(j).toString()
+                                	        }
+					} catch(err) {
+						step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
+						throw err
 					}
-					for(int j=0; j<scripts.size(); j++){
-					    sh scripts.get(j).toString()
-					}
-					step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
 				    }
 			    }
 		    }
