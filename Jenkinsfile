@@ -39,8 +39,7 @@ node('master') {
     echo "install_scripts: " + install_scripts.toString()
     echo "scripts: " + scripts.toString()
 
-    def build = {}
-    build.state = 'SUCCESS'
+    def failed = false
 
     def parallelInvocations = [:]
     for (int i = 0; i < combine.size(); i++) {
@@ -67,22 +66,23 @@ node('master') {
                                 sh 'sudo rm -rf ./*/target'
                                 sh './mvnw clean'
                                 sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-                                try {
-                                    for (int j = 0; j < install_scripts.size(); j++) {
+                                for (int j = 0; j < install_scripts.size(); j++) {
+                                    try {
                                         sh install_scripts.get(j).toString()
                                     }
-                                    for (int j = 0; j < scripts.size(); j++) {
+                                    catch (ignored) {
+                                        failed = true
+                                    }
+                                }
+                                for (int j = 0; j < scripts.size(); j++) {
+                                    try {
                                         sh scripts.get(j).toString()
                                     }
-                                    step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
-                                }
-                                catch (err) {
-                                    step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
-                                    transitionToState(build, currentBuild.result)
-                                    if (currentBuild.result != 'UNSTABLE') {
-                                        throw err
+                                    catch (ignored) {
+                                        failed = true
                                     }
                                 }
+                                stash includes: '**/target/*-reports/testng-results.xml', name: 'testng-results'
                             }
                         }
                     }
@@ -96,25 +96,14 @@ node('master') {
     }
 
     stage("Parallel Travis Execution") {
-        echo "Starting paralel execution"
+        echo "Starting parallel execution"
         parallel parallelInvocations
-        echo "Paralel execution has finished. State is: ${build.state}"
-        currentBuild.result = build.state
-    }
-}
-
-def transitionToState(build, state)
-{
-    echo "Transitioning from ${build.state} to ${state}"
-    // transition to FAILED immediately
-    if (state == 'FAILURE') {
-        build.state = state
-        echo "Transitioned to ${state}"
-    }
-    // transition to UNSTABLE only if it is still SUCCESS
-    if (state == 'UNSTABLE' && build.state == 'SUCCESS') {
-        build.state = state
-        echo "Transitioned to ${state}"
+        echo "Parallel execution has been finished"
+        unstash 'testng-results'
+        step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
+        if (failed && currentBuild.result != 'UNSTABLE') {
+            currentBuild.result = 'FAILURE'
+        }
     }
 }
 
