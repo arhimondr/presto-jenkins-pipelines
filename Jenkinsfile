@@ -105,7 +105,7 @@ node('master') {
         echo "Starting parallel execution"
         parallel parallelInvocations
         echo "Parallel execution has been finished"
-        sh 'sudo rm -rf ./*/target'
+        sh 'rm -rf ./*/target'
         stash_names.each { name -> unstash name }
         step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
         if (failed && currentBuild.result != 'UNSTABLE') {
