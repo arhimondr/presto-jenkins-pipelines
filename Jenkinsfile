@@ -93,19 +93,24 @@ node('master') {
     }
     
     stage("Parallel Travis Execution") {
+	echo "Starting paralel execution"
         parallel parallelInvocations
+	echo "Paralel execution has finished. State is: ${build.state}"
 	currentBuild.result = build.state
     }
 }
 
 def transitionToState(build, state){
+	echo "Transitioning from ${build.state} to ${state}"
 	// transition to FAILED immediately
 	if(state == 'FAILURE'){
 		build.state = state
+		echo "Transitioned to ${state}"
 	}
 	// transition to UNSTABLE only if it is still SUCCESS
 	if(state == 'UNSTABLE' && build.state == 'SUCCESS'){
 		build.state = state
+		echo "Transitioned to ${state}"
 	}
 }
 
