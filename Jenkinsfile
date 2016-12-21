@@ -82,7 +82,11 @@ node('master') {
                                         failed = true
                                     }
                                 }
-                                stash includes: '**/target/*-reports/testng-results.xml', name: 'testng-results'
+                                try {
+                                    stash includes: '**/target/*-reports/testng-results.xml', name: name
+                                }
+                                catch (ignored) {
+                                }
                             }
                         }
                     }
@@ -99,7 +103,8 @@ node('master') {
         echo "Starting parallel execution"
         parallel parallelInvocations
         echo "Parallel execution has been finished"
-        unstash 'testng-results'
+        sh 'sudo rm -rf ./*/target'
+        parallelInvocations.each { name, task -> unstash name }
         step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
         if (failed && currentBuild.result != 'UNSTABLE') {
             currentBuild.result = 'FAILURE'
