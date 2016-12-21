@@ -75,6 +75,7 @@ node('master') {
                 	                        for(int j=0; j<scripts.size(); j++){
                         	                    sh scripts.get(j).toString()
                                 	        }
+						step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
 					} catch(err) {
 						step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
 						transitionToState(build, currentBuild.result)
