@@ -82,10 +82,9 @@ node('master') {
                                         failed = true
                                     }
                                 }
-                                try {
+                                boolean testResultsArePresent = fileExists '**/target/*-reports/testng-results.xml'
+                                if (testResultsArePresent) {
                                     stash includes: '**/target/*-reports/testng-results.xml', name: name
-                                }
-                                catch (ignored) {
                                 }
                             }
                         }
