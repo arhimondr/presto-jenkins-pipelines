@@ -83,7 +83,7 @@ node('master') {
                                     }
                                 }
                                 boolean testResultsArePresent = new FileNameFinder()
-                                        .getFileNames(groovyHome, '**/target/*-reports/testng-results.xml')
+                                        .getFileNames(pwd(), '**/target/*-reports/testng-results.xml')
                                         .size() > 0
                                 if (testResultsArePresent) {
                                     stash includes: '**/target/*-reports/testng-results.xml', name: name
