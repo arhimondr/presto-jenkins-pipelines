@@ -78,7 +78,9 @@ node('master') {
 					} catch(err) {
 						step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
 						transitionToState(build, currentBuild.result)
-						throw err
+						if(currentBuild.result != 'UNSTABLE'){
+							throw err
+						}
 					}
 				    }
 			    }
