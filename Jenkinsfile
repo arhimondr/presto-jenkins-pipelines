@@ -42,6 +42,7 @@ node('master') {
     def failed = false
 
     def parallelInvocations = [:]
+    def stash_names = []
     for (int i = 0; i < combine.size(); i++) {
         def combined_variables = combine.get(i)
         def name = matrix.get(i).toString()
@@ -84,7 +85,9 @@ node('master') {
                                 }
                                 def status = sh returnStatus: true, script: 'ls **/target/*-reports/testng-results.xml'
                                 if (status == 0) {
-                                    stash includes: '**/target/*-reports/testng-results.xml', name: name
+                                    def stash_name = UUID.randomUUID().toString()
+                                    stash includes: '**/target/*-reports/testng-results.xml', name: stash_name
+                                    stash_names.add(stash_name)
                                 }
                             }
                         }
@@ -103,7 +106,7 @@ node('master') {
         parallel parallelInvocations
         echo "Parallel execution has been finished"
         sh 'sudo rm -rf ./*/target'
-        parallelInvocations.each { name, task -> unstash name }
+        stash_names.each { name -> unstash name }
         step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
         if (failed && currentBuild.result != 'UNSTABLE') {
             currentBuild.result = 'FAILURE'
