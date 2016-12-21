@@ -8,11 +8,11 @@ node('master') {
     def git_url = "https://github.com/${fork}/presto"
     def stages = env.STAGES
 
-    echo "git_branch: " + git_branch;
-    echo "git_url: " + git_url;
-    echo "stages: " + stages;
+    echo "git_branch: " + git_branch
+    echo "git_url: " + git_url
+    echo "stages: " + stages
 
-    def user = "";
+    def user = ""
     wrap([$class: 'BuildUser']) {
         user = env.BUILD_USER_ID
     }
@@ -27,20 +27,20 @@ node('master') {
 
     def yaml_content = readFile '.travis.yml'
     def travis = readAndConvertTravis(yaml_content)
-    def global = travis.env.global;
-    def matrix = travis.env.matrix;
-    def combine = combineEnvironmentProperties(matrix, global);
-    def install_scripts = getYamlStringOrListAsList(travis.install);
-    def scripts = getYamlStringOrListAsList(travis.script);
+    def global = travis.env.global
+    def matrix = travis.env.matrix
+    def combine = combineEnvironmentProperties(matrix, global)
+    def install_scripts = getYamlStringOrListAsList(travis.install)
+    def scripts = getYamlStringOrListAsList(travis.script)
 
-    echo "global: " + global.toString();
-    echo "matrix: " + matrix.toString();
-    echo "combine: " + combine.toString();
-    echo "install_scripts: " + install_scripts.toString();
-    echo "scripts: " + scripts.toString();
+    echo "global: " + global.toString()
+    echo "matrix: " + matrix.toString()
+    echo "combine: " + combine.toString()
+    echo "install_scripts: " + install_scripts.toString()
+    echo "scripts: " + scripts.toString()
 
-    def build = {};
-    build.state = 'SUCCESS';
+    def build = {}
+    build.state = 'SUCCESS'
 
     def parallelInvocations = [:]
     for (int i = 0; i < combine.size(); i++) {
@@ -57,12 +57,12 @@ node('master') {
 
                         configFileProvider([configFile(fileId: '00c4e7c0-a280-47b5-935e-9ed912f12d1c', variable: 'SETTINGS_XML_LOCATION')]) {
                             def settings_xml_location = env.SETTINGS_XML_LOCATION
-                            echo "settings_xml_location: " + settings_xml_location;
-                            def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location;
-                            echo "maven_config: " + maven_config;
-                            def invocation_environment = [];
-                            invocation_environment.addAll(combined_variables);
-                            invocation_environment.add(maven_config);
+                            echo "settings_xml_location: " + settings_xml_location
+                            def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location
+                            echo "maven_config: " + maven_config
+                            def invocation_environment = []
+                            invocation_environment.addAll(combined_variables)
+                            invocation_environment.add(maven_config)
                             withEnv(invocation_environment) {
                                 sh 'sudo rm -rf ./*/target'
                                 sh './mvnw clean'
@@ -121,7 +121,7 @@ def transitionToState(build, state)
 def getYamlStringOrListAsList(yamlEntry)
 {
     if (yamlEntry == null) {
-        return [];
+        return []
     }
     else if (yamlEntry instanceof String) {
         return [yamlEntry]
@@ -138,37 +138,37 @@ def combineEnvironmentProperties(matrix, global)
 {
     def excluded = ['MAVEN_OPTS']
 
-    def globalSanitized = [];
+    def globalSanitized = []
     for (int i = 0; i < global.size(); i++) {
-        def parsed = parseVariable(global.get(i));
-        def key = parsed['key'];
+        def parsed = parseVariable(global.get(i))
+        def key = parsed['key']
         if (!excluded.contains(key)) {
-            globalSanitized.add(sanitizeEnvironmentVariable(parsed));
+            globalSanitized.add(sanitizeEnvironmentVariable(parsed))
         }
     }
 
-    def result = [];
+    def result = []
     for (int i = 0; i < matrix.size(); i++) {
-        def properties = [];
-        properties.addAll(globalSanitized);
-        properties.add(sanitizeEnvironmentVariable(parseVariable(matrix.get(i))));
-        result[i] = properties;
+        def properties = []
+        properties.addAll(globalSanitized)
+        properties.add(sanitizeEnvironmentVariable(parseVariable(matrix.get(i))))
+        result[i] = properties
     }
-    return result;
+    return result
 }
 
 def parseVariable(String variable)
 {
-    def separatorIndex = variable.indexOf('=');
+    def separatorIndex = variable.indexOf('=')
     def parsed = [:]
-    parsed['key'] = variable.substring(0, separatorIndex);
-    parsed['value'] = variable.substring(separatorIndex + 1, variable.length());
-    return parsed;
+    parsed['key'] = variable.substring(0, separatorIndex)
+    parsed['value'] = variable.substring(separatorIndex + 1, variable.length())
+    return parsed
 }
 
 def sanitizeEnvironmentVariable(variable)
 {
-    return stripLeadingTrailingQuotes(variable['key']) + '=' + stripLeadingTrailingQuotes(variable['value']);
+    return stripLeadingTrailingQuotes(variable['key']) + '=' + stripLeadingTrailingQuotes(variable['value'])
 }
 
 def stripLeadingTrailingQuotes(String inputString)
