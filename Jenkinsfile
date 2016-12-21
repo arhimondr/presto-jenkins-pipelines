@@ -82,10 +82,8 @@ node('master') {
                                         failed = true
                                     }
                                 }
-                                boolean testResultsArePresent = new FileNameFinder()
-                                        .getFileNames(pwd(), '**/target/*-reports/testng-results.xml')
-                                        .size() > 0
-                                if (testResultsArePresent) {
+                                def status = sh returnStatus: true, script: 'ls **/target/*-reports/testng-results.xml'
+                                if (status == 0) {
                                     stash includes: '**/target/*-reports/testng-results.xml', name: name
                                 }
                             }
