@@ -86,6 +86,7 @@ node('master') {
                                 def status = sh returnStatus: true, script: 'ls **/target/*-reports/testng-results.xml'
                                 if (status == 0) {
                                     def stash_name = UUID.randomUUID().toString()
+                                    echo "Stashing: ${stash_name}"
                                     stash includes: '**/target/*-reports/testng-results.xml', name: stash_name
                                     stash_names.add(stash_name)
                                 }
@@ -106,7 +107,11 @@ node('master') {
         parallel parallelInvocations
         echo "Parallel execution has been finished"
         sh 'rm -rf ./*/target'
-        stash_names.each { name -> unstash name }
+        for (int i = 0; i < stash_names.size(); i++) {
+            def stash_name = stash_names.get(i)
+            echo "Unstashing: ${stash_name}"
+            unstash stash_name
+        }
         step([$class: 'Publisher', reportFilenamePattern: '**/target/*-reports/testng-results.xml'])
         if (failed && currentBuild.result != 'UNSTABLE') {
             currentBuild.result = 'FAILURE'
