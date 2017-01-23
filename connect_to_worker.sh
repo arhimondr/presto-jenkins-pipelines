@@ -23,4 +23,5 @@ PORT=$((22 + $WORKER_NUMBER));
 
 echo "Connecting to worker '$WORKER_NUMBER' at '$HOST:$PORT'.";
 
-ssh -o StrictHostKeyChecking=no -i docker-images/teradatalabs/jenkins-slave/id_rsa jenkins@dupa-worker1.td.teradata.com -p 23
+set -x
+ssh -o StrictHostKeyChecking=no -i docker-images/teradatalabs/jenkins-slave/id_rsa jenkins@${HOST}.td.teradata.com -p ${PORT}
