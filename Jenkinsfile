@@ -68,12 +68,7 @@ node('master') {
                                 sh './mvnw clean'
                                 sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
                                 for (int j = 0; j < install_scripts.size(); j++) {
-                                    try {
-                                        sh install_scripts.get(j).toString()
-                                    }
-                                    catch (ignored) {
-                                        failed = true
-                                    }
+                                    sh install_scripts.get(j).toString()
                                 }
                                 for (int j = 0; j < scripts.size(); j++) {
                                     try {
