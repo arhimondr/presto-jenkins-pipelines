@@ -61,7 +61,10 @@ node('master') {
                             def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location
                             echo "maven_config: " + maven_config
                             def invocation_environment = []
-                            invocation_environment.addAll(combined_variables)
+                            echo "combined_variables: " + combined_variables
+                            def expanded_variables = expandEnvironmentVariables(combined_variables)
+                            echo "expanded_variables: " + expanded_variables
+                            invocation_environment.addAll(expanded_variables)
                             invocation_environment.add(maven_config)
                             withEnv(invocation_environment) {
                                 sh 'sudo rm -rf ./*/target'
@@ -175,6 +178,21 @@ def stripLeadingTrailingQuotes(String inputString)
     else {
         return inputString
     }
+}
+
+def expandEnvironmentVariables(variables)
+{
+    def result = []
+    result.addAll(variables)
+    for (int i = 0; i < result.size(); i++) {
+        def expander = parseVariable(result.get(i))
+        for (int j = i + 1; j < result.size(); j++) {
+            def expandable = parseVariable(result.get(j))
+            expandable['value'] = expandable['value'].replaceAll('\\$\\{?' + expander['key'] + '\\}?', expander['value'])
+            result[j] = sanitizeEnvironmentVariable(expandable)
+        }
+    }
+    return result
 }
 
 @NonCPS
