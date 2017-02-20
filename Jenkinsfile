@@ -77,6 +77,26 @@ node('master') {
                                     try {
                                         sh scripts.get(j).toString()
                                     }
+                                    // Handle user interrupt
+                                    // https://gist.github.com/stephansnyt/3ad161eaa6185849872c3c9fce43ca81
+                                    catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException fie) {
+                                        // this ambiguous condition means a user probably aborted
+                                        if (fie.causes.size() == 0) {
+                                            throw fie
+                                        }
+                                        else {
+                                            failed = true
+                                        }
+                                    }
+                                    catch (hudson.AbortException ae) {
+                                        // this ambiguous condition means during a shell step, user probably aborted
+                                        if (ae.getMessage().contains('script returned exit code 143')) {
+                                            throw ae
+                                        }
+                                        else {
+                                            failed = true
+                                        }
+                                    }
                                     catch (ignored) {
                                         failed = true
                                     }
