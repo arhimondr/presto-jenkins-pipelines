@@ -68,11 +68,11 @@ node('master') {
                             sh './mvnw clean'
                             sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
                             for (int j = 0; j < install_scripts.size(); j++) {
-                                sh env_string + " " + install_scripts.get(j).toString()
+                                sh env_string + '\n' + install_scripts.get(j).toString()
                             }
                             for (int j = 0; j < scripts.size(); j++) {
                                 try {
-                                    sh env_string + " " + scripts.get(j).toString()
+                                    sh env_string + '\n' + scripts.get(j).toString()
                                 }
                                 // Handle user interrupt
                                 // https://gist.github.com/stephansnyt/3ad161eaa6185849872c3c9fce43ca81
