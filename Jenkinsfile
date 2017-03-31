@@ -29,7 +29,7 @@ node('master') {
     def travis = readAndConvertTravis(yaml_content)
     def global = travis.env.global
     def matrix = travis.env.matrix
-    def combine = combineEnvironmentProperties(matrix, global)
+    def combine = combineEnvironmentVariables(global, matrix)
     def install_scripts = getYamlStringOrListAsList(travis.install)
     def scripts = getYamlStringOrListAsList(travis.script)
 
@@ -60,54 +60,50 @@ node('master') {
                             echo "settings_xml_location: " + settings_xml_location
                             def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location
                             echo "maven_config: " + maven_config
-                            def invocation_environment = []
                             echo "combined_variables: " + combined_variables
-                            def expanded_variables = expandEnvironmentVariables(combined_variables)
-                            echo "expanded_variables: " + expanded_variables
-                            invocation_environment.addAll(expanded_variables)
-                            invocation_environment.add(maven_config)
-                            withEnv(invocation_environment) {
-                                sh 'sudo rm -rf ./*/target'
-                                sh './mvnw clean'
-                                sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
-                                for (int j = 0; j < install_scripts.size(); j++) {
-                                    sh install_scripts.get(j).toString()
+                            def env_string = combined_variables + " " + maven_config
+                            echo "env_string: " + env_string
+
+                            sh 'sudo rm -rf ./*/target'
+                            sh './mvnw clean'
+                            sh 'for container in $(docker ps -a -q); do docker rm -f ${container}; done'
+                            for (int j = 0; j < install_scripts.size(); j++) {
+                                sh env_string + " " + install_scripts.get(j).toString()
+                            }
+                            for (int j = 0; j < scripts.size(); j++) {
+                                try {
+                                    sh env_string + " " + scripts.get(j).toString()
                                 }
-                                for (int j = 0; j < scripts.size(); j++) {
-                                    try {
-                                        sh scripts.get(j).toString()
+                                // Handle user interrupt
+                                // https://gist.github.com/stephansnyt/3ad161eaa6185849872c3c9fce43ca81
+                                catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException fie) {
+                                    // this ambiguous condition means a user probably aborted
+                                    if (fie.causes.size() == 0) {
+                                        throw fie
                                     }
-                                    // Handle user interrupt
-                                    // https://gist.github.com/stephansnyt/3ad161eaa6185849872c3c9fce43ca81
-                                    catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException fie) {
-                                        // this ambiguous condition means a user probably aborted
-                                        if (fie.causes.size() == 0) {
-                                            throw fie
-                                        }
-                                        else {
-                                            failed = true
-                                        }
-                                    }
-                                    catch (hudson.AbortException ae) {
-                                        // this ambiguous condition means during a shell step, user probably aborted
-                                        if (ae.getMessage().contains('script returned exit code 143')) {
-                                            throw ae
-                                        }
-                                        else {
-                                            failed = true
-                                        }
-                                    }
-                                    catch (ignored) {
+                                    else {
                                         failed = true
                                     }
                                 }
-                                def status = sh returnStatus: true, script: 'ls **/target/*-reports/testng-results.xml'
-                                if (status == 0) {
-                                    def stash_name = UUID.randomUUID().toString()
-                                    echo "Stashing: ${stash_name}"
-                                    stash includes: '**/target/*-reports/testng-results.xml', name: stash_name
-                                    stash_names.add(stash_name)
+                                catch (hudson.AbortException ae) {
+                                    // this ambiguous condition means during a shell step, user probably aborted
+                                    if (ae.getMessage().contains('script returned exit code 143')) {
+                                        throw ae
+                                    }
+                                    else {
+                                        failed = true
+                                    }
                                 }
+                                catch (ignored) {
+                                    failed = true
+                                }
+                            }
+                            def status = sh returnStatus: true, script: 'ls **/target/*-reports/testng-results.xml'
+                            if (status == 0) {
+                                def stash_name = UUID.randomUUID().toString()
+                                echo "Stashing: ${stash_name}"
+                                stash includes: '**/target/*-reports/testng-results.xml', name: stash_name
+                                stash_names.add(stash_name)
                             }
                         }
                     }
@@ -153,59 +149,19 @@ def getYamlStringOrListAsList(yamlEntry)
     }
 }
 
-def combineEnvironmentProperties(matrix, global)
+def combineEnvironmentVariables(global, matrix)
 {
-    def excluded = ['MAVEN_OPTS']
-
-    def globalSanitized = []
+    def grobal_env_string = ""
     for (int i = 0; i < global.size(); i++) {
-        def parsed = parseVariable(global.get(i))
-        def key = parsed['key']
-        if (!excluded.contains(key)) {
-            globalSanitized.add(environmentVariableToString(parsed))
+        if (grobal_env_string.length() > 0) {
+            grobal_env_string += " "
         }
+        grobal_env_string += global.get(i)
     }
 
     def result = []
     for (int i = 0; i < matrix.size(); i++) {
-        def properties = []
-        properties.addAll(globalSanitized)
-        properties.add(environmentVariableToString(parseVariable(matrix.get(i))))
-        result[i] = properties
-    }
-    return result
-}
-
-def parseVariable(String variable)
-{
-    def separatorIndex = variable.indexOf('=')
-    def parsed = [:]
-    parsed['key'] = removeDoubleQuotes(variable.substring(0, separatorIndex))
-    parsed['value'] = removeDoubleQuotes(variable.substring(separatorIndex + 1, variable.length()))
-    return parsed
-}
-
-def removeDoubleQuotes(String inputString)
-{
-    return inputString.replaceAll("\"", "")
-}
-
-def environmentVariableToString(variable)
-{
-    return variable['key'] + '=' + variable['value']
-}
-
-def expandEnvironmentVariables(variables)
-{
-    def result = []
-    result.addAll(variables)
-    for (int i = 0; i < result.size(); i++) {
-        def expander = parseVariable(result.get(i))
-        for (int j = i + 1; j < result.size(); j++) {
-            def expandable = parseVariable(result.get(j))
-            expandable['value'] = expandable['value'].replaceAll('\\$\\{?' + expander['key'] + '\\}?', expander['value'])
-            result[j] = environmentVariableToString(expandable)
-        }
+        result[i] = grobal_env_string + (grobal_env_string.length() > 0 ? " " : "") + matrix.get(i)
     }
     return result
 }
