@@ -58,7 +58,7 @@ node('master') {
                         configFileProvider([configFile(fileId: '00c4e7c0-a280-47b5-935e-9ed912f12d1c', variable: 'SETTINGS_XML_LOCATION')]) {
                             def settings_xml_location = env.SETTINGS_XML_LOCATION
                             echo "settings_xml_location: " + settings_xml_location
-                            def maven_config = 'MAVEN_CONFIG=--settings ' + settings_xml_location
+                            def maven_config = 'MAVEN_CONFIG="--settings ' + settings_xml_location + '"'
                             echo "maven_config: " + maven_config
                             echo "combined_variables: " + combined_variables
                             def env_string = combined_variables + " " + maven_config
