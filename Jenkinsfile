@@ -162,7 +162,7 @@ def combineEnvironmentProperties(matrix, global)
         def parsed = parseVariable(global.get(i))
         def key = parsed['key']
         if (!excluded.contains(key)) {
-            globalSanitized.add(sanitizeEnvironmentVariable(parsed))
+            globalSanitized.add(environmentVariableToString(parsed))
         }
     }
 
@@ -170,7 +170,7 @@ def combineEnvironmentProperties(matrix, global)
     for (int i = 0; i < matrix.size(); i++) {
         def properties = []
         properties.addAll(globalSanitized)
-        properties.add(sanitizeEnvironmentVariable(parseVariable(matrix.get(i))))
+        properties.add(environmentVariableToString(parseVariable(matrix.get(i))))
         result[i] = properties
     }
     return result
@@ -180,24 +180,19 @@ def parseVariable(String variable)
 {
     def separatorIndex = variable.indexOf('=')
     def parsed = [:]
-    parsed['key'] = variable.substring(0, separatorIndex)
-    parsed['value'] = variable.substring(separatorIndex + 1, variable.length())
+    parsed['key'] = removeDoubleQuotes(variable.substring(0, separatorIndex))
+    parsed['value'] = removeDoubleQuotes(variable.substring(separatorIndex + 1, variable.length()))
     return parsed
 }
 
-def sanitizeEnvironmentVariable(variable)
+def removeDoubleQuotes(String inputString)
 {
-    return stripLeadingTrailingQuotes(variable['key']) + '=' + stripLeadingTrailingQuotes(variable['value'])
+    return inputString.replaceAll("\"", "")
 }
 
-def stripLeadingTrailingQuotes(String inputString)
+def environmentVariableToString(variable)
 {
-    if ((inputString.startsWith('"') && inputString.endsWith('"')) || (inputString.startsWith("'") && inputString.endsWith("'"))) {
-        return inputString.substring(1, inputString.length() - 1)
-    }
-    else {
-        return inputString
-    }
+    return variable['key'] + '=' + variable['value']
 }
 
 def expandEnvironmentVariables(variables)
@@ -209,7 +204,7 @@ def expandEnvironmentVariables(variables)
         for (int j = i + 1; j < result.size(); j++) {
             def expandable = parseVariable(result.get(j))
             expandable['value'] = expandable['value'].replaceAll('\\$\\{?' + expander['key'] + '\\}?', expander['value'])
-            result[j] = sanitizeEnvironmentVariable(expandable)
+            result[j] = environmentVariableToString(expandable)
         }
     }
     return result
